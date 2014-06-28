@@ -224,7 +224,7 @@ public class SocialNWStarter {
 		long diffInHours = TimeUnit.MILLISECONDS.toHours(duration);
 		if (diffInHours >= 24) {
 			long day = diffInHours / 24;
-			delayByNow = day + " day(s) ago";
+			delayByNow = day + (day == 1 ? " day" : " days") + " ago";
 		} else if (diffInHours > 0) {
 			delayByNow = diffInHours + (diffInHours == 1 ? " hour" : " hours")
 					+ " ago";
@@ -239,7 +239,7 @@ public class SocialNWStarter {
 	}
 
 	/**
-	 * TweetComparator is to sort the posts in the reverse chonological order
+	 * TweetComparator is to sort the posts in the reverse chronological order
 	 * @author sunish jose
 	 *
 	 */
