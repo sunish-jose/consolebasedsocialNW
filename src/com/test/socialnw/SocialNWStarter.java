@@ -11,12 +11,12 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 /**
- * 	Console based social networking
- *  sample application SocialNWStarter is the main call which performs
- *  the basic operations of posting, & reading messages, following another user and
- *  displaying the user's wall, the posts will be displayed in the
- *  reverse chronological order with latest at the top and oldest at the
- *  bottom (applicable only for reading and wall)
+ * 	Console based social networking sample application.
+ * SocialNWStarter is the main class which performs
+ * the basic operations of posting, & reading messages, following another user and
+ * displaying the user's wall, the posts will be displayed in the
+ * reverse chronological order with latest at the top and oldest at the
+ * bottom (applicable for reading and wall)
  *  
  *  @author sunish jose (sunish.jose@ymail.com) 
  */
@@ -26,11 +26,11 @@ public class SocialNWStarter {
 	//place holder for posted messages
 	private Map<String, List<Tweet>> tweetMap = new HashMap<String, List<Tweet>>();
 
-	//place holder for the users follow
+	//place holder for the users to follow
 	private Map<String, List<String>> followersMap = new HashMap<String, List<String>>();
 
 	public static final void main(String... aArgs) {
-		System.out.println("Console based social network application");
+		System.out.println("Console based social network application - Follow the instructions below");
 		System.out.println("1. To post your tweet: <user name> -> <your message>");
 		System.out.println("2. To read your tweet: <user name>");
 		System.out.println("3. To follow another user: <user name> follows <another user>");
@@ -47,23 +47,23 @@ public class SocialNWStarter {
 			}
 			String[] contents = message.split("\\s+");
 			if (contents.length == 1) {
-				String msgs = starter.getTweetsForRead(contents[0]);
-				starter.displayTweets(msgs);
+				List<Tweet> tweetMsg = starter.getTweets(contents[0], false);
+				starter.displayTweets(tweetMsg, false);
 			} else if (contents[1].equals("->")) {
 				starter.addTweet(contents[0], message.substring(	message.indexOf("->") + 2, message.length()).trim());
 			} else if (contents[1].equals("follows")) {
 				starter.addFollowersForTheUser(contents[0], contents[2]);
 			} else if (contents[1].equals("wall")) {
-				String msgs = starter.getTweetsForWall(contents[0]);
-				starter.displayTweets(msgs);
+				List<Tweet> tweetMsgs = starter.getTweets(contents[0], true);
+				starter.displayTweets(tweetMsgs, true);
 			}
 		}
 	}
 
 	/**
-	 * Add tweet messages of a particular user to tweetmap with userName as the
-	 * key and , list of tweet messages as value, if the user already exist
-	 * append the tweet messagelist
+	 * Add messages of a particular user with userName as the
+	 * key and , list of messages as value, if the user already exist and
+	 * got messages append to the new message into messagelist
 	 * 
 	 * @param userName
 	 * @param message
@@ -88,59 +88,57 @@ public class SocialNWStarter {
 	}
 
 	/**
-	 * Get the messages from the message map based on the username
-	 * sort it in the reverse chronological order based on the tweet time
+	 * Get the messages for display on the wall or to read based on the parameter
+	 * walll, if the user is following another user then display the another users
+	 * message on the users wall. Messages will be sorted reverse chronologically
+	 * 
 	 * @param userName
+	 * @param wall
 	 * @return
 	 */
-	public String getTweetsForRead(String userName) {
-		StringBuilder tweetMsg = new StringBuilder();
-		List<Tweet> tweets = tweetMap.get(userName);
-		if (tweets != null && !tweets.isEmpty()) {
-			Collections.sort(tweets, new TweetComparator());
-			for (Tweet tweet : tweets) {
-				tweetMsg.append(tweet.getMessage() + formatTweetTime(tweet)
-						+ "\n");
+	public List<Tweet> getTweets(String userName, boolean wall) {
+		List<Tweet> combinedTweets =null;
+		if(userName!=null && !userName.isEmpty()){
+			List<Tweet> tweets = tweetMap.get(userName);
+			if(tweets!=null && !tweets.isEmpty()){
+				combinedTweets = new ArrayList<Tweet>();
+				combinedTweets.addAll(tweets);
+				if (wall && hasFollowers(userName)) {
+					List<Tweet> followersTweets = getFollowersTweets(getFollowersList(userName));
+					combinedTweets.addAll(followersTweets);
+				}
+				if (combinedTweets != null && !combinedTweets.isEmpty()) {
+					Collections.sort(combinedTweets, new TweetComparator());
+				}
 			}
 		}
-		return tweetMsg.toString();
+		return combinedTweets==null?Collections.<Tweet>emptyList():combinedTweets;
 	}
 
 	/**
-	 * Get the tweet messages for display on the wall, if the user is following 
-	 * another user then put the another users message on the users wall
-	 * messages will be sorted reverse chronologically
-	 * @param userName
-	 * @return
-	 */
-	public String getTweetsForWall(String userName) {
-		StringBuilder tweetMsg = new StringBuilder();
-		List<Tweet> tweets = tweetMap.get(userName);
-		List<Tweet> combinedTweets = new ArrayList<Tweet>();
-		combinedTweets.addAll(tweets);
-		if (hasFollowers(userName)) {
-			List<Tweet> followersTweets = getFollowersTweets(getFollowersList(userName));
-			combinedTweets.addAll(followersTweets);
-		}
-
-		if (combinedTweets != null && !combinedTweets.isEmpty()) {
-			Collections.sort(combinedTweets, new TweetComparator());
-			for (Tweet tweet : combinedTweets) {
-				tweetMsg.append(tweet.getTweetUser() + " - "
-						+ tweet.getMessage() + formatTweetTime(tweet) + "\n");
-			}
-		}
-		return tweetMsg.toString();
-	}
-
-	/**
-	 * print the tweet messages, either user a console or system.out.println
+	 * print the messages, either use a console or system.out.println
+	 * format the message for read and wall based on the parameter wall
 	 * 
 	 * @param tweetMessages
+	 * @param wall
 	 */
-	public void displayTweets(String tweetMessages) {
-		if (null != tweetMessages && tweetMessages.length() > 0) {
-			System.out.println(tweetMessages);
+	public void displayTweets(List<Tweet> tweets, boolean wall) {
+		StringBuilder tweetMsg = new StringBuilder();
+		if (tweets != null && !tweets.isEmpty()) {
+			for (int index = 0; index < tweets.size(); index++) {
+				Tweet tweet = tweets.get(index);
+				String endingChar = index < tweets.size() - 1 ? "\n" : " ";
+				if(wall){
+					tweetMsg.append(tweet.getTweetUser() + " - "+ tweet.getMessage() + formatTweetTime(tweet)+ endingChar);
+				} else {
+					tweetMsg.append(tweet.getMessage() + formatTweetTime(tweet)+ endingChar);
+				}
+			}
+			if (null != tweetMsg && tweetMsg.length() > 0) {
+				System.out.println(tweetMsg);
+			} else {
+				System.out.println("No Tweets");
+			}
 		} else {
 			System.out.println("No Tweets");
 		}
@@ -153,7 +151,9 @@ public class SocialNWStarter {
 	 */
 	public boolean hasFollowers(String userName) {
 		boolean hasFollowers = false;
-		hasFollowers = followersMap.containsKey(userName);
+		if(userName!=null && !userName.isEmpty()) {
+			hasFollowers = followersMap.containsKey(userName);
+		}
 		return hasFollowers;
 	}
 
@@ -164,49 +164,55 @@ public class SocialNWStarter {
  */
 	public List<String> getFollowersList(String userName) {
 		List<String> followersList = null;
-		followersList = followersMap.get(userName);
+		if(userName!=null && !userName.isEmpty()) {
+			followersList = followersMap.get(userName);
+		}
 		return followersList == null ? Collections.<String> emptyList()
 				: followersList;
 	}
 
 	/**
-	 * Get the tweets messages of the users this particular user follows
+	 * Get the list of messages of the users this particular user follows
 	 * @param followersList
 	 * @return
 	 */
 	public List<Tweet> getFollowersTweets(List<String> followersList) {
 		List<Tweet> followersTweets = new ArrayList<Tweet>();
 		for (String userName : followersList) {
-			followersTweets.addAll(tweetMap.get(userName));
+			if(tweetMap.get(userName)!=null && !tweetMap.get(userName).isEmpty()){ 
+				followersTweets.addAll(tweetMap.get(userName));
+			}
 		}
 		return followersTweets;
 
 	}
 
 	/**
-	 * Add the followes of a particular user into followersMap
+	 * Add the followers of a particular user into followersMap
 	 * @param userName
 	 * @param followingUser
 	 */
 	public void addFollowersForTheUser(String userName, String followingUser) {
 		List<String> followersList = null;
-		if (followersMap.containsKey(userName)) {
-			followersList = followersMap.get(userName);
-			if (!followersList.contains(followingUser)) {
+		if(userName!=null && !userName.isEmpty() && followingUser!=null && !followingUser.isEmpty()) {
+			if (followersMap.containsKey(userName)) {
+				followersList = followersMap.get(userName);
+				if (!followersList.contains(followingUser)) {
+					followersList.add(followingUser);
+					followersMap.put(userName, followersList);
+				}
+			} else {
+				followersList = new ArrayList<String>();
 				followersList.add(followingUser);
 				followersMap.put(userName, followersList);
 			}
-		} else {
-			followersList = new ArrayList<String>();
-			followersList.add(followingUser);
-			followersMap.put(userName, followersList);
 		}
 
 	}
 
 	/**
-	 * format the time difference between now and the tweet timing 
-	 * and display the time difference on the wall and reading
+	 * format the time difference between now and the message time 
+	 * and display the time difference on the 'wall' and 'reading'
 	 * @param tweet
 	 * @return
 	 */
@@ -242,6 +248,5 @@ public class SocialNWStarter {
 		public int compare(Tweet tweet1, Tweet tweet2) {
 			return tweet2.getDate().compareTo(tweet1.getDate());
 		}
-
 	}
 }

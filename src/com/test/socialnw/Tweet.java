@@ -2,7 +2,12 @@ package com.test.socialnw;
 
 import java.util.Date;
 
-
+/**
+ * Tweet POJO class
+ * Holds the sample tweet messages along with the user and tweet time
+ * @author sunish jose (sunish.jose@ymail.com)
+ *
+ */
 public class Tweet {
 
 	private String message;
