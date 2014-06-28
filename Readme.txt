@@ -9,6 +9,6 @@ set the class path go to the base folder and invoke the below command from the c
 java -cp <classpath> com.test.socialnw.SocialNWStarter
 
 The test directory contains junit test cases, using any unit tests can be invoke by the ant target junit
->any junit
+>ant junit
 
 If you need any more clarification contact me @ sunish.jose@ymail.com
