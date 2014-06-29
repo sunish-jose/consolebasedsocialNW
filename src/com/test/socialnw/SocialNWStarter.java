@@ -100,6 +100,8 @@ public class SocialNWStarter {
 					fullName = fullName.replaceAll("^ +| +$|( )+", "$1");
 					if(validateFullName(fullName)) {
 						addTweet(fullName, message.substring(message.indexOf("->") + 2, message.length()).trim());
+					} else {
+						System.out.println("Invalid name");
 					}
 				}
 		}
