@@ -1,10 +1,17 @@
 package com.test.socialnw;
 
+import org.junit.Before;
 import org.junit.Test;
+import static org.junit.Assert.*;
 
-import junit.framework.TestCase;
 
-public class TestSocialNWStarter extends TestCase {
+/**
+ * TestSocialNWStarter.java, test case for the class SocialNWStarter.
+ * Tests most of the methods in the class SocialNWStarter.java using junit
+ * @author sunish jose
+ *
+ */
+public class TestSocialNWStarter {
 	private SocialNWStarter starter;
 	String userNancy = "user_nancy";
 	String userCharle = "Charle";
@@ -13,14 +20,15 @@ public class TestSocialNWStarter extends TestCase {
 	String tweetMsg1Charle = "Test tweet message 1 by Charle";
 	String tweetMsg2Charle = "Test tweet message 2 by Charle";
 
-	public void setUp() {
+	@Before
+	public void setup() {
 		starter = new SocialNWStarter();
 	}
 
 	public void tearDown() {
 
 	}
-
+	
 	@Test
 	public void testAddTweet() {
 		starter.addTweet(userNancy, tweetMsgNancy);
@@ -35,6 +43,7 @@ public class TestSocialNWStarter extends TestCase {
 		starter.addFollowersForTheUser(userNancy, userCharle);
 		assertTrue(starter.hasFollowers(userNancy));
 		assertFalse(starter.hasFollowers(userCharle));
+		
 	}
 	
 	@Test
@@ -79,15 +88,45 @@ public class TestSocialNWStarter extends TestCase {
 	}
 
 	@Test
-	public void testAddNullTweets() {
+	public void testGetTweetsForNullInputs() {
+		
 		starter.addTweet(userNancy, null);
 		assertNotNull(starter.getTweets(userNancy, false));
 		
 		assertEquals(0, starter.getTweets(userNancy, false).size());
 		
 		starter.addTweet(null, null);
+		
 		assertNotNull(starter.getTweets(null, false));
-		assertEquals(0, starter.getTweets(userNancy, false).size());
+		
+		assertEquals(0, starter.getTweets(userNancy, true).size());
+	}
+	
+	@Test
+	public void testValidateFullName() {
+		boolean valid = starter.validateFullName("FirstName");
+		assertTrue(valid);
+		
+		valid = starter.validateFullName("FirstName LastName");
+		assertTrue(valid);
+		
+		valid = starter.validateFullName("FristName MiddleName LastName");
+		assertTrue(valid);
+		
+		valid = starter.validateFullName("");
+		assertFalse(valid);
+		
+		valid = starter.validateFullName(null);
+		assertFalse(valid);
+		
+		valid=starter.validateFullName("FirstName MiddleName LastName FourthName");
+		assertFalse(valid);
+		
+		valid=starter.validateFullName("1stName");
+		assertFalse(valid);
+		
+		valid=starter.validateFullName("FirstName ->");
+		assertFalse(valid);
 	}
 
 }

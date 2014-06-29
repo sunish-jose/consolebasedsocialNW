@@ -28,6 +28,12 @@ public class SocialNWStarter {
 
 	//place holder for the users to follow
 	private Map<String, List<String>> followersMap = new HashMap<String, List<String>>();
+	
+	private static final CharSequence WALL = "wall";
+	
+	private static final CharSequence FOLLOWS = "follows";
+	
+	private static final CharSequence USER_MSG_SEPARATOR="->";
 
 	public static final void main(String... aArgs) {
 		System.out.println("Console based social network application - Follow the instructions below");
@@ -36,34 +42,98 @@ public class SocialNWStarter {
 		System.out.println("3. To follow another user: <user name> follows <another user>");
 		System.out.println("4. To display your wall: <user name> wall");
 		System.out.println("5. To quit the application type quit");
-
 		SocialNWStarter starter = new SocialNWStarter();
 		while (true) {
 			Console console = System.console();
 			String message = console.readLine("");
-			if (message.trim().equalsIgnoreCase("quit")) {
+			if (message!=null && !message.isEmpty() && message.trim().equalsIgnoreCase("quit")) {
 				System.out.println("Quitting the application");
 				break;
 			}
-			String[] contents = message.split("\\s+");
-			if (contents.length == 1) {
-				List<Tweet> tweetMsg = starter.getTweets(contents[0], false);
-				starter.displayTweets(tweetMsg, false);
-			} else if (contents[1].equals("->")) {
-				starter.addTweet(contents[0], message.substring(	message.indexOf("->") + 2, message.length()).trim());
-			} else if (contents[1].equals("follows")) {
-				starter.addFollowersForTheUser(contents[0], contents[2]);
-			} else if (contents[1].equals("wall")) {
-				List<Tweet> tweetMsgs = starter.getTweets(contents[0], true);
-				starter.displayTweets(tweetMsgs, true);
+			starter.processInputMessage(message.trim());
+		}
+	}
+	
+	/**
+	 * Process the input message. This method decide whether it is post, read, follows or wall request
+	 * It filters out the user names and post message, it display the 'wal'l, it also displays the 'read'
+	 * and it also invoke the 'follows'
+	 * Even if the user enters first middle & last names the program will accept correctly
+	 * ex. Bob Michael Miller -> What a nice day 
+	 * @param message
+	 */
+	public void processInputMessage(String message) {
+		if(message!=null && !message.isEmpty()) {
+				//for reading
+				if(!message.contains(WALL) && !message.contains(FOLLOWS) && !message.contains(USER_MSG_SEPARATOR)) {
+					//replace the extra white space in between first middle & last name
+					String fullName = message.replaceAll("^ +| +$|( )+", "$1");
+					if(validateFullName(fullName)) {
+						List<Tweet> tweets = getTweets(fullName, false);
+						displayTweets(tweets, false);						
+					} else {
+						System.out.println("Invalid Name");
+					}
+				} else if(message.contains(WALL)) {
+					String fullName = message.substring(0, message.indexOf(WALL.toString())-1).trim();
+					fullName = fullName.replaceAll("^ +| +$|( )+", "$1");
+					if(validateFullName(fullName)) {
+						List<Tweet> tweetMsgs = getTweets(fullName, true);
+						displayTweets(tweetMsgs, true);
+					} else {
+						System.out.println("Invalid Name");
+					}
+				} else if(message.contains(FOLLOWS)) {
+					String fullNameLead = message.substring(0, message.indexOf(FOLLOWS.toString())-1).trim();
+					fullNameLead = fullNameLead.replaceAll("^ +| +$|( )+", "$1");
+					String fullNameFollower =  message.substring(message.indexOf(FOLLOWS.toString())+FOLLOWS.length(), message.length()).trim();
+					fullNameFollower = fullNameFollower.replaceAll("^ +| +$|( )+", "$1");
+					if(validateFullName(fullNameLead) && validateFullName(fullNameFollower)) {
+						addFollowersForTheUser(fullNameLead, fullNameFollower);
+					} else {
+						System.out.println("Invalid names");
+					}
+				} 
+				//checks the message contains -> then it is for posting
+				else if(message.contains(USER_MSG_SEPARATOR)) {
+					String fullName = message.substring(0, message.indexOf("->")).trim();
+					fullName = fullName.replaceAll("^ +| +$|( )+", "$1");
+					if(validateFullName(fullName)) {
+						addTweet(fullName, message.substring(message.indexOf("->") + 2, message.length()).trim());
+					}
+				}
+		}
+	}
+	
+	/**
+	 * Validate full name. Assumption - Full name can have first name middle name & last name
+	 * All the characters should be alphabetic, no numerals or any special characters
+	 * @param fullName
+	 * @return
+	 */
+	public boolean validateFullName(String fullName){
+		boolean valid = false;
+		if(fullName!=null && !fullName.isEmpty()) {
+			String[] names = fullName.split("\\s+");
+			if (names.length > 3) {
+				valid = false;
+			} else {
+				for (String name : names) {
+					if (!name.trim().matches("[a-zA-Z]{1,30}")) {
+						valid = false;
+						break;
+					}
+					valid=true;
+				}
 			}
 		}
+		return valid;
 	}
 
 	/**
-	 * Add messages of a particular user with userName as the
+	 * Add messages of a particular user with full name as the
 	 * key and , list of messages as value, if the user already exist and
-	 * got messages append to the new message into messagelist
+	 * got messages, append the new message into messagelist
 	 * 
 	 * @param userName
 	 * @param message
@@ -88,24 +158,30 @@ public class SocialNWStarter {
 	}
 
 	/**
-	 * Get the messages for display on the wall or to read based on the parameter
-	 * walll, if the user is following another user then display the another users
-	 * message on the users wall. Messages will be sorted reverse chronologically
+	 * Get the list of tweets for a particular user, if the user follows another
+	 * user get the other user's tweets also. Combine both the lists and sort is
+	 * reverse chronological order
 	 * 
-	 * @param userName
-	 * @param wall
+	 * @param userName - full name of the user
+	 * @param wall - true for displaying on wall and false for reading
 	 * @return
 	 */
 	public List<Tweet> getTweets(String userName, boolean wall) {
 		List<Tweet> combinedTweets =null;
+		List<Tweet> followersTweets = null;
 		if(userName!=null && !userName.isEmpty()){
 			List<Tweet> tweets = tweetMap.get(userName);
 			if(tweets!=null && !tweets.isEmpty()){
 				combinedTweets = new ArrayList<Tweet>();
 				combinedTweets.addAll(tweets);
 				if (wall && hasFollowers(userName)) {
-					List<Tweet> followersTweets = getFollowersTweets(getFollowersList(userName));
-					combinedTweets.addAll(followersTweets);
+					List<String> followersList = getFollowersList(userName);
+					if(followersList!=null && !followersList.isEmpty()) {
+						followersTweets = getFollowersTweets(followersList);
+					}
+					if(followersTweets!=null && !followersTweets.isEmpty()) {
+						combinedTweets.addAll(followersTweets);
+					}
 				}
 				if (combinedTweets != null && !combinedTweets.isEmpty()) {
 					Collections.sort(combinedTweets, new TweetComparator());
@@ -134,7 +210,7 @@ public class SocialNWStarter {
 					tweetMsg.append(tweet.getMessage() + formatTweetTime(tweet)+ endingChar);
 				}
 			}
-			if (null != tweetMsg && tweetMsg.length() > 0) {
+			if (tweetMsg.length() > 0) {
 				System.out.println(tweetMsg);
 			} else {
 				System.out.println("No Tweets");
@@ -235,12 +311,11 @@ public class SocialNWStarter {
 			delayByNow = diffInSeconds
 					+ (diffInSeconds == 1 ? " second" : " seconds") + " ago";
 		}
-		return " (" + delayByNow + " )";
+		return " (" + delayByNow + ")";
 	}
 
 	/**
 	 * TweetComparator is to sort the posts in the reverse chronological order
-	 * @author sunish jose
 	 *
 	 */
 	public class TweetComparator implements Comparator<Tweet> {
