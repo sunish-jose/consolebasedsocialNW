@@ -22,4 +22,6 @@ post:
 john miller -> what a nice weather
 Nacy J Nadth -> What a funny post
 
+You can also the functional test report with all test cases in the file TestReport.xlsx
+
 If you need any more clarification contact me @ sunish.jose@ymail.com

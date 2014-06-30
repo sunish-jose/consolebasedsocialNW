@@ -91,7 +91,7 @@ public class SocialNWStarter {
 					if(validateFullName(fullNameLead) && validateFullName(fullNameFollower)) {
 						addFollowersForTheUser(fullNameLead, fullNameFollower);
 					} else {
-						System.out.println("Invalid names");
+						System.out.println("Invalid name(s)");
 					}
 				} 
 				//checks the message contains -> then it is for posting
