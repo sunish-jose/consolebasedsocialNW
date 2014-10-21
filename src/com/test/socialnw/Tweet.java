@@ -14,8 +14,6 @@ public class Tweet {
 	private Date date;
 	private String tweetUser;
 	
-	
-	public Tweet(){}
 	public Tweet(String tweetUser, String message, Date now) {
 		this.tweetUser = tweetUser;
 		this.message=message;
